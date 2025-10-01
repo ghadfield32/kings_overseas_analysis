@@ -1,25 +1,6 @@
 """
-IMPROVED SACRAMENTO KINGS DATA ANALYSIS
+SACRAMENTO KINGS DATA ANALYSIS
 ========================================
-Complete refactored version with ALL issues fixed:
-
-MAJOR IMPROVEMENTS:
-1. [OK] ML Model: Fixed from AUC 0.445 -> Expected 0.70+ (proper features, stricter targets)
-2. [OK] Removed ALL fake/fallback values (data-driven team weights, proper NaN handling)
-3. [OK] 40% faster: Vectorized operations, consolidated player_id creation
-4. [OK] Database: Primary keys, foreign keys, check constraints
-5. [OK] Validation: Complete data quality checks
-6. [OK] Full schema utilization: usage_percentage, plus_minus, all advanced metrics
-
-Changes from original:
-- Lines 132-138: Removed arbitrary team weights -> data-driven calculation
-- Line 815: Removed fake 50.0 fallback -> proper NaN handling
-- Lines 260-272: Consolidated player_id creation (was in 5 places)
-- Lines 447-500: Vectorized all calculations (single pass)
-- Lines 325-350: Added proper database schema with constraints
-- Lines 594-740: Completely rewritten ML model (7 new features, proper target)
-- NEW: Data validation layer throughout
-- NEW: Utilizes ALL available columns including usage_percentage, plus_minus
 """
 
 import json
