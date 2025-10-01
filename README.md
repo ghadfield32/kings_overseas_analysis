@@ -2,6 +2,21 @@
 
 **Candidate Submission** - Geoffrey Hadfield - ghadfield32@gmail.com
 
+## 🚀 Quick Start
+
+Get up and running in 3 commands:
+
+```bash
+# 1. Install dependencies
+uv sync
+
+# 2. Run the complete analysis
+uv run python overseas_analysis.py
+
+# 3. Launch the interactive dashboard
+uv run streamlit run app.py
+```
+
 ## Project Background
 
 This project was completed as part of the **Sacramento Kings Data Science Assessment** for a data science position. The Kings Analytics team designed this exercise to evaluate candidates' abilities in data cleaning, exploratory data analysis, and communication skills through a real-world basketball analytics challenge.
