@@ -9,7 +9,8 @@ st.set_page_config(page_title="Kings | Intl Scouting", layout="wide")
 def load_reports():
     df = pd.read_csv("final_scouting_report.csv")
     try:
-        with open("ml_metrics.json","r") as f: metrics = json.load(f)
+        with open("ml_metrics.json","r") as f: 
+            metrics = json.load(f)
     except Exception:
         metrics = {}
     try:
@@ -22,7 +23,7 @@ df, metrics, fi = load_reports()
 
 # ---- SIDEBAR ----
 st.sidebar.header("Filters")
-leagues = sorted([l for l in df["league"].dropna().unique()])
+leagues = sorted([l for l in df.get("league", pd.Series(dtype=str)).dropna().unique()])
 sel_leagues = st.sidebar.multiselect("League", leagues, default=leagues)
 min_mpg = float(df["mpg"].min()) if "mpg" in df else 0.0
 max_mpg = float(df["mpg"].max()) if "mpg" in df else 40.0
@@ -42,7 +43,8 @@ extra.metric("Brier", f"{metrics.get('brier_score_calibrated', float('nan')):.3f
 
 # ---- FILTER DATA ----
 f = df.copy()
-f = f[f["league"].isin(sel_leagues)]
+if "league" in f:
+    f = f[f["league"].isin(sel_leagues)]
 f = f[(f["mpg"] >= mpg_range[0]) & (f["mpg"] <= mpg_range[1])]
 f = f[f["age_2021"] <= age_max]
 if exp_opt == "With NBA exp":
@@ -64,11 +66,6 @@ tab_rec, tab_eda, tab_model, tab_limits = st.tabs(
 )
 
 with tab_rec:
-    # highlight Top-K
-    styled = f.head(100).style.apply(
-        lambda s: ["background-color:#fff4d6" if (i < top_k) else "" for i in range(len(s))],
-        axis=0
-    )
     display_cols = [c for c in [
         "rank","first_name","last_name","age_2021","league","team",
         "games","mpg","ppg","apg","rpg","three_pt_pct",
@@ -78,17 +75,17 @@ with tab_rec:
     st.download_button("Download filtered CSV", f.to_csv(index=False).encode("utf-8"),
                        file_name="scouting_recs_filtered.csv", mime="text/csv")
 
-    # details panel
     st.subheader("Player details")
-    pid = st.selectbox("Select player", f["first_name"]+" "+f["last_name"])
-    row = f[(f["first_name"]+" "+f["last_name"])==pid].iloc[0]
-    colA,colB,colC = st.columns(3)
-    colA.metric("MPG", f"{row.get('mpg', float('nan')):.1f}")
-    colB.metric("PPG", f"{row.get('ppg', float('nan')):.1f}")
-    colC.metric("TS%", f"{row.get('true_shooting_percentage', float('nan')):.1%}")
-    st.write(f"**Team**: {row.get('team','—')} | **League**: {row.get('league','—')} | **Age**: {int(row.get('age_2021',0))}")
-    if not math.isnan(row.get("nba_success_prob", float("nan"))):
-        st.info(f"Calibrated NBA success probability: {row['nba_success_prob']:.1%}")
+    if not f.empty:
+        pid = st.selectbox("Select player", f["first_name"]+" "+f["last_name"])
+        row = f[(f["first_name"]+" "+f["last_name"])==pid].iloc[0]
+        colA,colB,colC = st.columns(3)
+        colA.metric("MPG", f"{row.get('mpg', float('nan')):.1f}")
+        colB.metric("PPG", f"{row.get('ppg', float('nan')):.1f}")
+        colC.metric("TS%", f"{row.get('true_shooting_percentage', float('nan')):.1%}")
+        st.write(f"**Team**: {row.get('team','—')} | **League**: {row.get('league','—')} | **Age**: {int(row.get('age_2021',0))}")
+        if not math.isnan(row.get("nba_success_prob", float("nan"))):
+            st.info(f"Calibrated NBA success probability: {row['nba_success_prob']:.1%}")
 
 with tab_eda:
     st.subheader("Exploratory Data Analysis")
@@ -109,7 +106,7 @@ with tab_model:
 
 with tab_limits:
     st.markdown("""
-- Player identities are **anonymized**; outcomes cannot be validated post-2021.
-- Dataset is **imbalanced (~12–13% success)**; PR-AUC emphasized over ROC-AUC.
-- Reported metrics include **calibration** (Brier) and **Precision@K** for decision support.
+- Player identities are anonymized; outcomes cannot be validated post-2021.
+- Dataset is imbalanced; PR-AUC emphasized over ROC-AUC.
+- Metrics include calibration (Brier) and Precision@K.
 """)
