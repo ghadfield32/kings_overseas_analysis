@@ -55,35 +55,36 @@ This repository contains a comprehensive analysis of international basketball pl
 
 ## 🎯 Top 5 Scouting Recommendations
 
-### 1. **LA TORRE MCCASKILL** - Scout Score: 115.1
-- **Age**: 25 | **League**: EuroCup | **Team**: RedHawks
-- **2021 Stats**: 17.9 PPG, 2.8 APG, 5.3 RPG, 52.0% 3P%, 68.5% TS%
-- **NBA Success Probability**: 35.9%
-- **Key Strength**: Elite 3-point shooting (52.0%)
+### 1. **BATISTA SHOUTVIN** - Scout Score: 121.6
+- **Age**: 23 | **League**: EuroCup | **Team**: Fighting Irish  
+- **2021 Stats**: 14.7 PPG, 4.2 APG, 1.8 RPG, 35.5% 3P%, 64.5% TS%  
+- **NBA Success Probability**: 81.2%  
+- **Key Strength**: Strong development trajectory (+6.9 PPG over career) with efficient scoring
 
-### 2. **BATISTA SHOUTVIN** - Scout Score: 114.1
-- **Age**: 23 | **League**: EuroCup | **Team**: Fighting Irish
-- **2021 Stats**: 14.7 PPG, 4.2 APG, 1.8 RPG, 35.5% 3P%, 64.5% TS%
-- **NBA Success Probability**: 48.4%
-- **Key Strength**: Strong development trajectory (+6.9 PPG over career)
+### 2. **LA TORRE MCCASKILL** - Scout Score: 112.5
+- **Age**: 25 | **League**: EuroCup | **Team**: RedHawks  
+- **2021 Stats**: 17.9 PPG, 2.8 APG, 5.3 RPG, 52.0% 3P%, 68.5% TS%  
+- **NBA Success Probability**: 25.0%  
+- **Key Strength**: Elite 3-point shooting (52.0% 3P) at solid volume
 
-### 3. **XABI NWABA** - Scout Score: 99.5
-- **Age**: 27 | **League**: Italy - Liga A | **Team**: Bisons
-- **2021 Stats**: 16.9 PPG, 1.2 APG, 7.4 RPG, 62.9% FT%, 59.8% TS%
-- **NBA Success Probability**: 45.7%
-- **Key Strength**: Excellent rebounding (7.4 RPG)
+### 3. **FARLEY ATKINS** - Scout Score: 112.5
+- **Age**: 24 | **League**: EuroCup | **Team**: Chippewas  
+- **2021 Stats**: 15.3 PPG, 2.8 APG, 5.5 RPG, 43.2% 3P%, 64.4% TS%  
+- **NBA Success Probability**: 77.2%  
+- **Key Strength**: Versatile wing/forward profile with efficient perimeter shooting
 
-### 4. **POYTHRESS WIGGINTON** - Scout Score: 99.1
-- **Age**: 25 | **League**: Italy - Liga A | **Team**: Mustangs
-- **2021 Stats**: 18.5 PPG, 1.6 APG, 4.2 RPG, 44.3% 3P%, 64.9% TS%
-- **NBA Success Probability**: 33.1%
-- **Key Strength**: High-volume scoring with efficiency
+### 4. **POYTHRESS WIGGINTON** - Scout Score: 107.6
+- **Age**: 25 | **League**: Italy - Liga A | **Team**: Mustangs  
+- **2021 Stats**: 18.5 PPG, 1.6 APG, 4.2 RPG, 44.3% 3P%, 64.9% TS%  
+- **NBA Success Probability**: 74.6%  
+- **Key Strength**: High-volume scoring with strong efficiency (TS% ~65%)
 
-### 5. **FARLEY ATKINS** - Scout Score: 97.9
-- **Age**: 24 | **League**: EuroCup | **Team**: Chippewas
-- **2021 Stats**: 15.3 PPG, 2.8 APG, 5.5 RPG, 43.2% 3P%, 64.4% TS%
-- **NBA Success Probability**: 8.9%
-- **Key Strength**: Versatile forward with good shooting
+### 5. **BOWDLER PEREZ** - Scout Score: 101.6
+- **Age**: 27 | **League**: Italy - Liga A | **Team**: Black Bears  
+- **2021 Stats**: 16.1 PPG, 1.0 APG, 7.1 RPG, 44.4% 3P%, 90.2% FT%, 67.5% TS%  
+- **NBA Success Probability**: 76.4%  
+- **Key Strength**: Stretch big skillset—premium shooting (44.4% 3P, 90.2% FT) with rebounding
+
 
 ## 🔬 Methodology
 
