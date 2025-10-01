@@ -49,7 +49,7 @@ This repository contains a comprehensive analysis of international basketball pl
 
 ### Key Deliverables
 - **Top 20 Scouting Targets** with detailed player profiles
-- **Machine Learning Model** for NBA success prediction (ROC-AUC: 0.548, PR-AUC: 0.262)
+- **Machine Learning Model** for NBA success prediction (ROC-AUC: 0.721, PR-AUC: 0.336)
 - **Data-driven team fit weights** calculated from 485 successful NBA players
 - **Comprehensive EDA** with performance trend analysis
 
@@ -91,10 +91,10 @@ This repository contains a comprehensive analysis of international basketball pl
 - **Algorithm**: Calibrated Gradient Boosting with Platt scaling
 - **Features**: 17 statistical metrics including trends, ratios, and advanced stats
 - **Performance**: 
-  - Test ROC-AUC: 0.548 (IQR: 0.370-0.642)
-  - Test PR-AUC: 0.262 (IQR: 0.168-0.414)
-  - Brier Score: 0.133 (improved calibration)
-  - Precision@10: 20.0%
+  - Test ROC-AUC: 0.721
+  - Test PR-AUC: 0.336
+  - Brier Score: 0.111 (improved calibration)
+  - Precision@10: 30.00%
 
 ### Scout Score Formula
 ```
