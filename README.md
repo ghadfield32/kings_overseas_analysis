@@ -135,10 +135,18 @@ Calculated from 485 successful NBA players (MPG ≥ 20):
 │   ├── nba_box_player_season.json
 │   ├── international_box_player_season.json
 │   └── player.json
-└── pyproject.toml               # Python dependencies
+├── pyproject.toml               # Modern Python project configuration
+├── uv.lock                      # Locked dependency versions (uv)
+└── README.md                    # This comprehensive documentation
 ```
 
 ## 🛠 Technical Implementation
+
+### Modern Python Tooling
+- **uv package manager**: Fast dependency resolution and virtual environment management
+- **pyproject.toml**: Modern Python project configuration with PEP 621 compliance
+- **uv.lock**: Reproducible builds with locked dependency versions
+- **Cross-platform compatibility**: Works on Windows, macOS, and Linux
 
 ### Performance Optimizations
 - **40% faster execution** through vectorized operations
@@ -173,20 +181,37 @@ Calculated from 485 successful NBA players (MPG ≥ 20):
 
 ## 🚀 Usage Instructions
 
-1. **Install Dependencies**:
+This project uses modern Python tooling with `uv` for fast dependency management and `pyproject.toml` for project configuration.
+
+1. **Install uv** (if not already installed):
    ```bash
-   pip install -r requirements.txt
+   # On Windows (PowerShell)
+   irm https://astral.sh/uv/install.ps1 | iex
+   
+   # On macOS/Linux
+   curl -LsSf https://astral.sh/uv/install.sh | sh
    ```
 
-2. **Run Analysis**:
+2. **Install Dependencies**:
    ```bash
-   python overseas_analysis.py
+   uv sync
    ```
 
-3. **View Results**:
+3. **Run Analysis**:
+   ```bash
+   uv run python overseas_analysis.py
+   ```
+
+4. **View Results**:
    - Check `final_scouting_report.csv` for player rankings
    - Review `eda_visualizations.png` for data exploration
    - Examine `ml_diagnostic_plots.png` for model validation
+
+### Alternative: Using uv directly
+```bash
+# Run without pre-installing dependencies
+uv run --with pandas --with scikit-learn --with matplotlib python overseas_analysis.py
+```
 
 ## 📈 Business Impact
 
