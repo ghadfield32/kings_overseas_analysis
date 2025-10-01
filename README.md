@@ -1,6 +1,8 @@
-# DATA SCIENCE PROJECT
+# Sacramento Kings Data Science Assessment
 
-Congratulations on your impressive application. Your background stood out among a crowded application pool and we wanted to get to understand better your skillset via a project. As is common with data science projects, this exercise will highlight your ability to clean, understand, and present data. Use this opportunity to highlight your skills and demonstrate your knowledge of data science best practices.
+**Candidate Submission** - [Your Name]
+
+This repository contains my analysis and recommendations for international basketball players that the Sacramento Kings should scout, based on the provided NBA and European league data.
 
 Work in whatever language you are most comfortable in.
 

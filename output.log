@@ -1,0 +1,49 @@
+========================================================================================================================
+                                        SACRAMENTO KINGS DATA SCIENCE PROJECT
+                                   Improved International Scouting Analysis
+========================================================================================================================
+
+======================================== DATA LOADING & VALIDATION ========================================
+
+OK Loaded 1,663 player demographics
+OK Loaded 1,685 NBA player-season records
+OK Loaded 3,370 International player-season records
+
+OK Creating unified player identifiers...
+OK Data validation complete
+
+OK SQLite database ready: kings_scouting.db
+
+======================================== DATABASE ETL WITH CONSTRAINTS ========================================
+
+[DEBUG] Data Inspection Before ETL:
+   [UNI] player_df shape: (1663, 6)
+   [UNI] nba_df shape: (1685, 56)
+   [UNI] intl_df shape: (3370, 53)
+
+[DEBUG] Unique player_ids:
+   [UNI] In player_df: 1663
+   [UNI] In nba_df: 515
+   [UNI] In intl_df: 1473
+
+[DEBUG] Orphaned Records (stats without demographics):
+   [UNI] NBA records without player demographics: 50
+      Examples: ['salvatore_forte iii', 'ahmad_rice iv', 'tonut_bane jr.', 'hasheem_della valle', 'emmanuel_berhanemeskel iv']
+   [UNI] International records without player demographics: 0
+
+[FIX] Filtered out 192 NBA records without demographics
+
+[DEBUG] Writing filtered data to temp tables...
+   Writing 1663 players
+   Writing 1493 NBA records
+   Writing 3370 International records
+Traceback (most recent call last):
+  File "C:\docker_projects\data_science_project_sep_2025\improved_analyzer.py", line 1101, in <module>
+    main()
+  File "C:\docker_projects\data_science_project_sep_2025\improved_analyzer.py", line 1097, in main
+    analyzer.run_full_analysis()
+  File "C:\docker_projects\data_science_project_sep_2025\improved_analyzer.py", line 1083, in run_full_analysis
+    self.etl_to_database()
+  File "C:\docker_projects\data_science_project_sep_2025\improved_analyzer.py", line 225, in etl_to_database
+    self.conn.executescript("""
+sqlite3.IntegrityError: FOREIGN KEY constraint failed

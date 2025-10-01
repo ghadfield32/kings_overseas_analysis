@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.venvscriptsactivate)",
+      "Bash(uv sync:*)",
+      "Bash(python:*)",
+      "Bash(.venvScriptspython.exe improved_analyzer.py)",
+      "Bash(.venv/Scripts/python.exe:*)",
+      "Bash(timeout 120 .venv/Scripts/python.exe:*)",
+      "Bash(timeout:*)",
+      "Bash(uv run:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
