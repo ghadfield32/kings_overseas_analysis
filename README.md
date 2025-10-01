@@ -1,6 +1,6 @@
 # Sacramento Kings Data Science Assessment
 
-**Candidate Submission** - [Your Name]
+**Candidate Submission** - ghadfield32
 
 This repository contains my analysis and recommendations for international basketball players that the Sacramento Kings should scout, based on the provided NBA and European league data.
 
