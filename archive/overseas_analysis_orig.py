@@ -1,6 +1,7 @@
+# overseas_analysis.py
+
 """
 Sacramento Kings – International Scouting Analysis
-UPDATED VERSION with enhanced data validation and EDA
 """
 
 import json
@@ -25,10 +26,10 @@ plt.rcParams['figure.figsize'] = (18, 12)
 
 class ImprovedBasketballAnalyzer:
     """
-    End-to-end pipeline with enhanced data validation:
-      - load/validate data with collision detection
+    End-to-end pipeline:
+      - load/validate data
       - build SQLite schema and ETL
-      - comprehensive EDA with data quality checks
+      - EDA and vectorized stats
       - simple ML model for NBA success
       - ranked scouting list and report
     """
@@ -43,7 +44,6 @@ class ImprovedBasketballAnalyzer:
         self.nba_df = None
         self.intl_df = None
         self.data_profile = {}
-        self.data_quality_issues = []  # Track issues found during validation
 
         # Analysis products
         self.career_df = None
@@ -69,133 +69,30 @@ class ImprovedBasketballAnalyzer:
         """Safe division returning np.nan for zero/nan denominator."""
         return np.where((pd.notna(den)) & (den != 0), num / den, np.nan)
 
-    def _check_duplicate_names(self, df: pd.DataFrame, name: str) -> pd.DataFrame:
-        """
-        Check for duplicate player names and report them.
-        If duplicates exist, enhance player_id with birth_year.
-        """
-        name_counts = df.groupby(['first_name', 'last_name']).size()
-        duplicates = name_counts[name_counts > 1]
-        
-        if len(duplicates) > 0:
-            issue = f"[{name}] Found {len(duplicates)} duplicate name(s):"
-            for (fname, lname), count in duplicates.items():
-                issue += f"\n  - {fname} {lname}: {count} occurrences"
-            self.data_quality_issues.append(issue)
-            print(issue)
-            
-            # If player_df has birth_date, we can use it to differentiate
-            if 'birth_year' in df.columns:
-                print(f"[{name}] Enhancing player_id with birth_year to resolve collisions")
-                df['player_id'] = (
-                    df['first_name'].str.lower() + '_' + 
-                    df['last_name'].str.lower() + '_' + 
-                    df['birth_year'].astype(str)
-                )
-                return df
-        
-        return df
-
     def _validate_data(self, df: pd.DataFrame, name: str, required_cols: List[str]) -> pd.DataFrame:
-        """
-        Enhanced validation: check required columns, numeric ranges, and data consistency.
-        """
-        print(f"\n[{name}] Validating data...")
-        
-        # Check for required columns
+        """Validate DataFrame has required columns and check basic numeric ranges."""
         missing = [col for col in required_cols if col not in df.columns]
         if missing:
-            issue = f"[{name}] Missing required columns (adding as NaN): {missing}"
-            self.data_quality_issues.append(issue)
-            print(issue)
+            print(f"[{name}] adding missing columns as NaN: {missing}")
             for col in missing:
                 df[col] = np.nan
 
-        # Validate numeric positive fields
-        numeric_positive = ['games', 'minutes', 'points', 'assists', 'steals', 'blocked_shots']
+        numeric_positive = ['games', 'minutes', 'points', 'assists', 'rebounds']
         for col in numeric_positive:
             if col in df.columns:
-                invalid_count = 0
-                
-                # Check for negative values
-                negative_mask = df[col] < 0
-                if negative_mask.any():
-                    invalid_count += negative_mask.sum()
-                    df.loc[negative_mask, col] = np.nan
-                
-                # Check for extremely high values (potential data errors)
-                if col == 'games':
-                    extreme_mask = df[col] > 100  # No player plays >100 games/season
-                    if extreme_mask.any():
-                        invalid_count += extreme_mask.sum()
-                        issue = f"[{name}] {extreme_mask.sum()} extreme values in 'games' (>100) -> set to NaN"
-                        self.data_quality_issues.append(issue)
-                        print(issue)
-                        df.loc[extreme_mask, col] = np.nan
-                
-                if col == 'minutes':
-                    # No player can play >4000 minutes in a season (48.8 mins/game * 82 games = ~4000)
-                    extreme_mask = df[col] > 4500
-                    if extreme_mask.any():
-                        invalid_count += extreme_mask.sum()
-                        issue = f"[{name}] {extreme_mask.sum()} extreme values in 'minutes' (>4500) -> set to NaN"
-                        self.data_quality_issues.append(issue)
-                        print(issue)
-                        df.loc[extreme_mask, col] = np.nan
-                
-                if invalid_count > 0 and col in ['games', 'minutes', 'points']:
-                    issue = f"[{name}] Total invalid values in '{col}': {invalid_count}"
-                    self.data_quality_issues.append(issue)
-                    print(issue)
-
-        # Validate percentage fields are between 0 and 1
-        percentage_cols = ['true_shooting_percentage', 'usage_percentage']
-        for col in percentage_cols:
-            if col in df.columns:
-                out_of_range = ((df[col] < 0) | (df[col] > 1.5)).fillna(False)
-                if out_of_range.any():
-                    issue = f"[{name}] {out_of_range.sum()} out-of-range values in '{col}' (should be 0-1) -> set to NaN"
-                    self.data_quality_issues.append(issue)
-                    print(issue)
-                    df.loc[out_of_range, col] = np.nan
-
-        # Validate shooting attempts >= makes
-        shot_pairs = [
-            ('two_points_made', 'two_points_attempted'),
-            ('three_points_made', 'three_points_attempted'),
-            ('free_throws_made', 'free_throws_attempted')
-        ]
-        for made_col, att_col in shot_pairs:
-            if made_col in df.columns and att_col in df.columns:
-                invalid = (df[made_col] > df[att_col]) & df[made_col].notna() & df[att_col].notna()
+                invalid = df[col] < 0
                 if invalid.any():
-                    issue = f"[{name}] {invalid.sum()} rows where {made_col} > {att_col} -> set to NaN"
-                    self.data_quality_issues.append(issue)
-                    print(issue)
-                    df.loc[invalid, [made_col, att_col]] = np.nan
+                    print(f"[{name}] {invalid.sum()} negative values in '{col}' -> set to NaN")
+                    df.loc[invalid, col] = np.nan
 
-        # Check for records with no meaningful stats (likely data errors)
-        if all(col in df.columns for col in ['games', 'minutes', 'points']):
-            zero_stats = (
-                (df['games'].fillna(0) == 0) & 
-                (df['minutes'].fillna(0) == 0) & 
-                (df['points'].fillna(0) == 0)
-            )
-            if zero_stats.any():
-                issue = f"[{name}] {zero_stats.sum()} records with zero games/minutes/points"
-                self.data_quality_issues.append(issue)
-                print(issue)
-
-        print(f"[{name}] Validation complete. Total issues logged: {len(self.data_quality_issues)}")
         return df
 
     def load_data(self):
-        """Load and validate data with enhanced collision detection."""
+        """Load and validate data; create a single player_id consistently."""
         print("=" * 100)
         print("SACRAMENTO KINGS – INTERNATIONAL SCOUTING")
         print("=" * 100)
 
-        # Load raw data
         with open(f'{self.data_dir}/player.json', 'r') as f:
             self.player_df = pd.DataFrame(json.load(f))
         with open(f'{self.data_dir}/nba_box_player_season.json', 'r') as f:
@@ -207,70 +104,21 @@ class ImprovedBasketballAnalyzer:
         print(f"Loaded {len(self.nba_df):,} NBA player-seasons")
         print(f"Loaded {len(self.intl_df):,} International player-seasons")
 
-        # Process birth dates first
+        # Unified identifier
+        for df in [self.player_df, self.nba_df, self.intl_df]:
+            df['player_id'] = (df['first_name'].str.lower() + '_' + df['last_name'].str.lower())
+
+        # Basic dates
         self.player_df['birth_date'] = pd.to_datetime(self.player_df['birth_date'])
         self.player_df['birth_year'] = self.player_df['birth_date'].dt.year
         self.player_df['age_2021'] = 2021 - self.player_df['birth_year']
 
-        # Initial player_id creation (simple version)
-        for df in [self.player_df, self.nba_df, self.intl_df]:
-            df['player_id'] = (df['first_name'].str.lower() + '_' + df['last_name'].str.lower())
+        # Validation
+        self.player_df = self._validate_data(self.player_df, 'Player', ['first_name', 'last_name', 'birth_date'])
+        self.nba_df = self._validate_data(self.nba_df, 'NBA', ['season', 'games', 'minutes', 'points', 'assists'])
+        self.intl_df = self._validate_data(self.intl_df, 'International', ['season', 'games', 'minutes', 'points', 'assists'])
 
-        # Check for duplicate names in each dataset
-        print("\n" + "=" * 100)
-        print("CHECKING FOR DUPLICATE NAMES")
-        print("=" * 100)
-        
-        # Check player demographics for duplicates
-        self._check_duplicate_names(self.player_df, 'Player Demographics')
-        
-        # Check NBA data for duplicates  
-        nba_temp = self.nba_df[['first_name', 'last_name']].drop_duplicates()
-        self._check_duplicate_names(nba_temp, 'NBA Data')
-        
-        # Check International data for duplicates
-        intl_temp = self.intl_df[['first_name', 'last_name']].drop_duplicates()
-        self._check_duplicate_names(intl_temp, 'International Data')
-
-        # If player_df was updated with birth_year in player_id, update other datasets
-        if any('birth_year' in issue for issue in self.data_quality_issues):
-            print("\nUpdating player_id in NBA and International data to match enhanced format...")
-            
-            # Create lookup from player_df
-            player_id_map = self.player_df.set_index(
-                self.player_df['first_name'].str.lower() + '_' + self.player_df['last_name'].str.lower()
-            )['player_id'].to_dict()
-            
-            # Update NBA data
-            simple_id = self.nba_df['first_name'].str.lower() + '_' + self.nba_df['last_name'].str.lower()
-            self.nba_df['player_id'] = simple_id.map(player_id_map).fillna(simple_id)
-            
-            # Update International data
-            simple_id = self.intl_df['first_name'].str.lower() + '_' + self.intl_df['last_name'].str.lower()
-            self.intl_df['player_id'] = simple_id.map(player_id_map).fillna(simple_id)
-
-        # Validation with enhanced checks
-        self.player_df = self._validate_data(
-            self.player_df, 
-            'Player', 
-            ['first_name', 'last_name', 'birth_date']
-        )
-        self.nba_df = self._validate_data(
-            self.nba_df, 
-            'NBA', 
-            ['season', 'games', 'minutes', 'points', 'assists', 'offensive_rebounds', 'defensive_rebounds']
-        )
-        self.intl_df = self._validate_data(
-            self.intl_df, 
-            'International', 
-            ['season', 'games', 'minutes', 'points', 'assists', 'offensive_rebounds', 'defensive_rebounds']
-        )
-
-        # Summary of data quality
-        print("\n" + "=" * 100)
-        print(f"DATA QUALITY SUMMARY: {len(self.data_quality_issues)} total issues identified")
-        print("=" * 100)
-        
+        print("Data validation complete.")
         return self
 
     def setup_database(self):
@@ -293,21 +141,15 @@ class ImprovedBasketballAnalyzer:
 
         if len(nba_orphans) > 0:
             before = len(self.nba_df)
-            orphan_names = self.nba_df[self.nba_df['player_id'].isin(nba_orphans)][['first_name', 'last_name']].drop_duplicates()
-            issue = f"Filtered {before - len(self.nba_df)} NBA rows without demographics: {list(orphan_names.itertuples(index=False, name=None))}"
-            self.data_quality_issues.append(issue)
-            print(issue)
             self.nba_df = self.nba_df[self.nba_df['player_id'].isin(player_ids_demo)].copy()
+            print(f"Filtered {before - len(self.nba_df)} NBA rows without demographics.")
 
         if len(intl_orphans) > 0:
             before = len(self.intl_df)
-            orphan_names = self.intl_df[self.intl_df['player_id'].isin(intl_orphans)][['first_name', 'last_name']].drop_duplicates()
-            issue = f"Filtered {before - len(self.intl_df)} International rows without demographics: {list(orphan_names.itertuples(index=False, name=None))}"
-            self.data_quality_issues.append(issue)
-            print(issue)
             self.intl_df = self.intl_df[self.intl_df['player_id'].isin(player_ids_demo)].copy()
+            print(f"Filtered {before - len(self.intl_df)} International rows without demographics.")
 
-        # Temp tables
+        # Temp tables (helpful when inspecting intermediate data)
         self.player_df.to_sql('players_temp', self.conn, if_exists='replace', index=False)
         self.nba_df.to_sql('nba_stats_temp', self.conn, if_exists='replace', index=False)
         self.intl_df.to_sql('intl_stats_temp', self.conn, if_exists='replace', index=False)
@@ -381,13 +223,6 @@ class ImprovedBasketballAnalyzer:
                 FOREIGN KEY (player_id) REFERENCES players(player_id),
                 PRIMARY KEY (player_id, season, league, team)
             );
-            
-            DROP TABLE IF EXISTS data_quality_log;
-            CREATE TABLE data_quality_log (
-                issue_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                issue_description TEXT NOT NULL,
-                timestamp TEXT DEFAULT CURRENT_TIMESTAMP
-            );
         """)
         self.conn.execute("PRAGMA foreign_keys=ON;")
 
@@ -411,14 +246,6 @@ class ImprovedBasketballAnalyzer:
         (self.intl_df[[c for c in intl_cols if c in self.intl_df.columns]]
          .to_sql('intl_stats', self.conn, if_exists='append', index=False))
 
-        # Log data quality issues
-        for issue in self.data_quality_issues:
-            self.conn.execute(
-                "INSERT INTO data_quality_log (issue_description) VALUES (?)",
-                (issue,)
-            )
-        self.conn.commit()
-
         # Cleanup temp and add indexes
         self.conn.execute("DROP TABLE IF EXISTS players_temp;")
         self.conn.execute("DROP TABLE IF EXISTS nba_stats_temp;")
@@ -428,11 +255,11 @@ class ImprovedBasketballAnalyzer:
         self.conn.execute("CREATE INDEX IF NOT EXISTS idx_intl_league ON intl_stats(league);")
         self.conn.commit()
 
-        print("ETL complete: tables = players, nba_stats, intl_stats, data_quality_log")
+        print("ETL complete: tables = players, nba_stats, intl_stats")
         return self
 
     def run_sql_examples(self):
-        """SQL sanity checks with data quality queries."""
+        """A couple of quick SQL checks."""
         assert self.conn is not None, "Database not initialized."
 
         print("\nSQL sanity checks:")
@@ -440,17 +267,13 @@ class ImprovedBasketballAnalyzer:
         SELECT
             'NBA' as dataset,
             COUNT(*) as total_records,
-            SUM(CASE WHEN games IS NULL OR games <= 0 THEN 1 ELSE 0 END) as invalid_games,
-            SUM(CASE WHEN minutes IS NULL THEN 1 ELSE 0 END) as missing_minutes,
-            SUM(CASE WHEN points IS NULL THEN 1 ELSE 0 END) as missing_points
+            SUM(CASE WHEN games IS NULL OR games <= 0 THEN 1 ELSE 0 END) as invalid_games
         FROM nba_stats
         UNION ALL
         SELECT
             'International' as dataset,
             COUNT(*) as total_records,
-            SUM(CASE WHEN games IS NULL OR games <= 0 THEN 1 ELSE 0 END) as invalid_games,
-            SUM(CASE WHEN minutes IS NULL THEN 1 ELSE 0 END) as missing_minutes,
-            SUM(CASE WHEN points IS NULL THEN 1 ELSE 0 END) as missing_points
+            SUM(CASE WHEN games IS NULL OR games <= 0 THEN 1 ELSE 0 END) as invalid_games
         FROM intl_stats;
         """
         result = pd.read_sql_query(query, self.conn)
@@ -472,16 +295,10 @@ class ImprovedBasketballAnalyzer:
         """
         result = pd.read_sql_query(query, self.conn)
         print(result.to_string(index=False))
-        
-        print("\nData quality issues logged:")
-        query = "SELECT COUNT(*) as total_issues FROM data_quality_log;"
-        result = pd.read_sql_query(query, self.conn)
-        print(result.to_string(index=False))
-        
         return self
 
     def profile_data_structure(self):
-        """Enhanced EDA with data quality visualizations."""
+        """Print available columns and simple coverage stats; save a basic EDA plot."""
         print("\nDATA STRUCTURE")
 
         print(f"\nPlayer columns ({len(self.player_df.columns)}):")
@@ -505,180 +322,64 @@ class ImprovedBasketballAnalyzer:
         print(f"Players with International data: {len(intl_players):,}")
         print(f"Players with both: {len(both_leagues):,}")
 
-        # Enhanced EDA plots with data quality checks
+        # EDA plots (saved to file)
         try:
             import matplotlib
             matplotlib.use('Agg')
             import matplotlib.pyplot as plt
 
-            fig = plt.figure(figsize=(20, 12))
-            gs = fig.add_gridspec(3, 3, hspace=0.3, wspace=0.3)
-
-            # Row 1: Original plots
-            ax1 = fig.add_subplot(gs[0, 0])
-            ax2 = fig.add_subplot(gs[0, 1])
-            ax3 = fig.add_subplot(gs[0, 2])
+            fig, axes = plt.subplots(1, 3, figsize=(15, 4))
 
             nba_2021 = self.nba_df[self.nba_df['season'] == 2021]
             intl_2021 = self.intl_df[self.intl_df['season'] == 2021]
 
-            # Plot 1: Shooting efficiency
             if 'true_shooting_percentage' in nba_2021.columns and 'true_shooting_percentage' in intl_2021.columns:
                 nba_ts = nba_2021['true_shooting_percentage'].dropna()
                 intl_ts = intl_2021['true_shooting_percentage'].dropna()
-                ax1.hist(nba_ts, bins=20, alpha=0.6, label=f'NBA (n={len(nba_ts)})', edgecolor='black')
-                ax1.hist(intl_ts, bins=20, alpha=0.6, label=f'International (n={len(intl_ts)})', edgecolor='black')
-                ax1.set_xlabel('True Shooting %')
-                ax1.set_ylabel('Frequency')
-                ax1.set_title('Shooting Efficiency (2021)')
-                ax1.legend()
-                ax1.grid(alpha=0.3)
+                axes[0].hist(nba_ts, bins=20, alpha=0.6, label=f'NBA (n={len(nba_ts)})', edgecolor='black')
+                axes[0].hist(intl_ts, bins=20, alpha=0.6, label=f'International (n={len(intl_ts)})', edgecolor='black')
+                axes[0].set_xlabel('True Shooting %')
+                axes[0].set_ylabel('Frequency')
+                axes[0].set_title('Shooting Efficiency (2021)')
+                axes[0].legend()
+                axes[0].grid(alpha=0.3)
 
-            # Plot 2: Age vs MPG
             if 'player_id' in intl_2021.columns:
                 intl_with_age = intl_2021.merge(self.player_df[['player_id', 'age_2021']], on='player_id', how='left')
                 leagues = intl_with_age['league'].value_counts().head(4).index
                 for league in leagues:
                     league_data = intl_with_age[intl_with_age['league'] == league]
                     if len(league_data) > 0:
-                        ax2.scatter(
+                        axes[1].scatter(
                             league_data['age_2021'],
                             league_data.get('mpg', league_data['minutes'] / league_data['games']),
                             alpha=0.6, s=50, label=league, edgecolors='black', linewidth=0.5
                         )
-                ax2.set_xlabel('Age (2021)')
-                ax2.set_ylabel('Minutes Per Game')
-                ax2.set_title('Age vs MPG (International 2021)')
-                ax2.legend(loc='best', fontsize=8)
-                ax2.grid(alpha=0.3)
+                axes[1].set_xlabel('Age (2021)')
+                axes[1].set_ylabel('Minutes Per Game')
+                axes[1].set_title('Age vs MPG (International 2021)')
+                axes[1].legend(loc='best', fontsize=8)
+                axes[1].grid(alpha=0.3)
 
-            # Plot 3: 3PA Rate
             if 'three_point_attempt_rate' in nba_2021.columns and 'three_point_attempt_rate' in intl_2021.columns:
                 nba_3par = nba_2021['three_point_attempt_rate'].dropna()
                 intl_3par = intl_2021['three_point_attempt_rate'].dropna()
-                ax3.hist(nba_3par, bins=20, alpha=0.6, label=f'NBA (n={len(nba_3par)})', edgecolor='black')
-                ax3.hist(intl_3par, bins=20, alpha=0.6, label=f'International (n={len(intl_3par)})', edgecolor='black')
-                ax3.set_xlabel('3PA Rate')
-                ax3.set_ylabel('Frequency')
-                ax3.set_title('3PA Rate (2021)')
-                ax3.legend()
-                ax3.grid(alpha=0.3)
+                axes[2].hist(nba_3par, bins=20, alpha=0.6, label=f'NBA (n={len(nba_3par)})', edgecolor='black')
+                axes[2].hist(intl_3par, bins=20, alpha=0.6, label=f'International (n={len(intl_3par)})', edgecolor='black')
+                axes[2].set_xlabel('3PA Rate')
+                axes[2].set_ylabel('Frequency')
+                axes[2].set_title('3PA Rate (2021)')
+                axes[2].legend()
+                axes[2].grid(alpha=0.3)
 
-            # Row 2: Data Quality Visualizations
-            ax4 = fig.add_subplot(gs[1, 0])
-            ax5 = fig.add_subplot(gs[1, 1])
-            ax6 = fig.add_subplot(gs[1, 2])
-
-            # Plot 4: Missing data heatmap for NBA
-            nba_key_cols = ['games', 'minutes', 'points', 'assists', 'offensive_rebounds', 
-                           'defensive_rebounds', 'true_shooting_percentage']
-            nba_missing = self.nba_df[nba_key_cols].isnull().sum()
-            ax4.barh(range(len(nba_missing)), nba_missing.values, color='steelblue', edgecolor='black')
-            ax4.set_yticks(range(len(nba_missing)))
-            ax4.set_yticklabels(nba_missing.index, fontsize=8)
-            ax4.set_xlabel('Missing Values Count')
-            ax4.set_title('NBA Data: Missing Values')
-            ax4.grid(axis='x', alpha=0.3)
-
-            # Plot 5: Missing data heatmap for International
-            intl_missing = self.intl_df[nba_key_cols].isnull().sum()
-            ax5.barh(range(len(intl_missing)), intl_missing.values, color='coral', edgecolor='black')
-            ax5.set_yticks(range(len(intl_missing)))
-            ax5.set_yticklabels(intl_missing.index, fontsize=8)
-            ax5.set_xlabel('Missing Values Count')
-            ax5.set_title('International Data: Missing Values')
-            ax5.grid(axis='x', alpha=0.3)
-
-            # Plot 6: Data completeness by season
-            nba_completeness = []
-            intl_completeness = []
-            all_seasons = sorted(set(self.nba_df['season'].unique()) | set(self.intl_df['season'].unique()))
-            
-            for season in all_seasons:
-                nba_season_data = self.nba_df[self.nba_df['season'] == season]
-                intl_season_data = self.intl_df[self.intl_df['season'] == season]
-                
-                if len(nba_season_data) > 0:
-                    nba_complete = (1 - nba_season_data[nba_key_cols].isnull().mean().mean()) * 100
-                    nba_completeness.append(nba_complete)
-                else:
-                    nba_completeness.append(0)
-                    
-                if len(intl_season_data) > 0:
-                    intl_complete = (1 - intl_season_data[nba_key_cols].isnull().mean().mean()) * 100
-                    intl_completeness.append(intl_complete)
-                else:
-                    intl_completeness.append(0)
-            
-            ax6.plot(all_seasons, nba_completeness, marker='o', label='NBA', linewidth=2)
-            ax6.plot(all_seasons, intl_completeness, marker='s', label='International', linewidth=2)
-            ax6.set_xlabel('Season')
-            ax6.set_ylabel('Data Completeness (%)')
-            ax6.set_title('Data Completeness by Season')
-            ax6.legend()
-            ax6.grid(alpha=0.3)
-            ax6.set_ylim([0, 105])
-
-            # Row 3: Additional data quality checks
-            ax7 = fig.add_subplot(gs[2, 0])
-            ax8 = fig.add_subplot(gs[2, 1])
-            ax9 = fig.add_subplot(gs[2, 2])
-
-            # Plot 7: Field goal percentage consistency check
-            for df, label, color in [(self.nba_df, 'NBA', 'steelblue'), 
-                                     (self.intl_df, 'International', 'coral')]:
-                if all(col in df.columns for col in ['two_points_made', 'two_points_attempted']):
-                    valid_attempts = df['two_points_attempted'] > 10
-                    fg_pct_calculated = df.loc[valid_attempts, 'two_points_made'] / df.loc[valid_attempts, 'two_points_attempted']
-                    ax7.hist(fg_pct_calculated, bins=20, alpha=0.5, label=label, 
-                            edgecolor='black', color=color)
-            ax7.set_xlabel('2P%')
-            ax7.set_ylabel('Frequency')
-            ax7.set_title('Two-Point Percentage Distribution\n(min 10 attempts)')
-            ax7.legend()
-            ax7.grid(alpha=0.3)
-
-            # Plot 8: Minutes per game distribution
-            nba_mpg = self.nba_df['minutes'] / self.nba_df['games']
-            intl_mpg = self.intl_df['minutes'] / self.intl_df['games']
-            ax8.boxplot([nba_mpg.dropna(), intl_mpg.dropna()], 
-                       labels=['NBA', 'International'],
-                       widths=0.6)
-            ax8.set_ylabel('Minutes Per Game')
-            ax8.set_title('MPG Distribution by League')
-            ax8.grid(axis='y', alpha=0.3)
-
-            # Plot 9: Player career length distribution
-            nba_career_length = self.nba_df.groupby('player_id')['season'].nunique()
-            intl_career_length = self.intl_df.groupby('player_id')['season'].nunique()
-            
-            ax9.hist(nba_career_length, bins=range(1, max(nba_career_length)+2), 
-                    alpha=0.6, label=f'NBA (n={len(nba_career_length)})', 
-                    edgecolor='black', color='steelblue')
-            ax9.hist(intl_career_length, bins=range(1, max(intl_career_length)+2), 
-                    alpha=0.6, label=f'International (n={len(intl_career_length)})', 
-                    edgecolor='black', color='coral')
-            ax9.set_xlabel('Number of Seasons')
-            ax9.set_ylabel('Number of Players')
-            ax9.set_title('Career Length Distribution')
-            ax9.legend()
-            ax9.grid(alpha=0.3)
-
-            plt.suptitle('Enhanced EDA with Data Quality Checks', fontsize=16, y=0.995)
-            plt.savefig('eda_visualizations_enhanced.png', dpi=150, bbox_inches='tight')
+            plt.tight_layout()
+            plt.savefig('eda_visualizations.png', dpi=150, bbox_inches='tight')
             plt.close()
-            print("Saved: eda_visualizations_enhanced.png")
+            print("Saved: eda_visualizations.png")
         except Exception as e:
             print(f"EDA visualization failed: {e}")
-            import traceback
-            traceback.print_exc()
 
         return self
-
-    # [REST OF THE METHODS REMAIN THE SAME AS ORIGINAL]
-    # calculate_statistics, analyze_performance_patterns, train_nba_success_model,
-    # calculate_team_weights, identify_scouting_targets, generate_comprehensive_report,
-    # save_outputs, run_full_analysis remain unchanged
 
     def calculate_statistics(self):
         """Vectorized per-game, per-36, and efficiency metrics."""
@@ -1289,8 +990,7 @@ class ImprovedBasketballAnalyzer:
             print(f"Brier (cal/uncal): {m['brier_score_calibrated']:.3f} / {m['brier_score_uncalibrated']:.3f}")
             print(f"Precision@10: {m.get('precision_at_10', np.nan):.1%}")
 
-        print(f"\nVectorized metrics computed; database constraints applied; enhanced EDA saved to file.")
-        print(f"Data quality issues logged: {len(self.data_quality_issues)}")
+        print(f"\nVectorized metrics computed; database constraints applied; basic EDA saved to file.")
         return self
 
     def save_outputs(self):
@@ -1317,17 +1017,8 @@ class ImprovedBasketballAnalyzer:
                 json.dump(self.ml_artifacts['metrics'], f, indent=2)
             print("Saved: ml_metrics.json")
 
-        # Save data quality report
-        with open('data_quality_report.txt', 'w') as f:
-            f.write("DATA QUALITY REPORT\n")
-            f.write("=" * 100 + "\n\n")
-            f.write(f"Total issues identified: {len(self.data_quality_issues)}\n\n")
-            for i, issue in enumerate(self.data_quality_issues, 1):
-                f.write(f"{i}. {issue}\n")
-        print("Saved: data_quality_report.txt")
-
         if self.conn is not None:
-            print(f"Database file: {self.db_path} (includes data_quality_log table)")
+            print(f"Database file: {self.db_path}")
             self.conn.close()
 
         print("\nDONE")
