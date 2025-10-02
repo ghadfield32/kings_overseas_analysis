@@ -427,21 +427,7 @@ f["rank"] = range(1, len(f) + 1)
 
 st.title("🏀 Sacramento Kings: International Scouting Analysis")
 st.markdown("**Data**: NBA + European Leagues (2010–2021) | **Purpose**: Assignment Demonstration")
-st.markdown("""
-**Scout Score Formula**  
-<code>SCOUT_SCORE = performance_score × age_bonus × improvement_bonus × fit_multiplier × ml_multiplier</code>
 
-- **Performance Score**: Weighted combination of <strong>PPG</strong>, <strong>APG</strong>, <strong>RPG</strong>, <strong>EFF</strong>, <strong>TS%</strong>
-- **Age Bonus**: <span style="color:#228B22">1.3</span> (<24), <span style="color:#228B22">1.2</span> (24-25), <span style="color:#228B22">1.1</span> (26-27), <span style="color:#228B22">1.0</span> (28+)
-- **Improvement Bonus**: <span style="color:#228B22">1.2</span> (&gt;5 PPG growth), <span style="color:#228B22">1.15</span> (3-5), <span style="color:#228B22">1.1</span> (1-3), <span style="color:#228B22">1.0</span> (&lt;1)
-- **Team Fit Multiplier**: Data-driven weights for  
-    • <strong>3PT</strong> (<span style="color:#228B22">1.120</span>), 
-    • <strong>Defense</strong> (<span style="color:#228B22">1.101</span>), 
-    • <strong>Playmaking</strong> (<span style="color:#228B22">1.101</span>), 
-    • <strong>Rebounding</strong> (<span style="color:#228B22">1.075</span>), 
-    • <strong>Youth</strong> (<span style="color:#228B22">1.050</span>)
-- **ML Multiplier**: Calibrated NBA success probability adjustment
-""", unsafe_allow_html=True)
 
 col1, col2, col3, col4 = st.columns(4)
 
