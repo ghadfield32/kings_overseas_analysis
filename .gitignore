@@ -1,3 +1,6 @@
+.venv
+archive
+
 # History files
 .Rhistory
 .Rapp.history

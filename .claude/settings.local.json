@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(tee:*)",
+      "Bash(docker exec:*)",
+      "Bash(dir:*)",
+      "Bash(source:*)",
+      "Bash(../.venv/Scripts/python.exe -c:*)",
+      "Bash(../.venv/Scripts/python.exe:*)",
+      "Bash(cat:*)",
+      "Bash(find:*)",
+      "Bash(.venvScriptspython.exe -m modular.main)",
+      "Bash(.venv/Scripts/python.exe -m modular.main:*)",
+      "Bash(.venv/Scripts/python.exe modular/main.py:*)",
+      "Bash(Select-String -Pattern \"(SUMMARY|test_auc|ROC-AUC|PIPELINE COMPLETE)\" -Context 5,5)",
+      "Bash(.venv/Scripts/python.exe -c \"import ast; ast.parse(open(''app.py'', encoding=''utf-8'').read())\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
